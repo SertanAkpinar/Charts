@@ -1,19 +1,44 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
-} from "recharts";
-
-const data = [
-  { name: 'Mercedes', models: 400, details: { sKlasse: 150, cKlasse: 75, gKlasse: 25, vKlasse: 50, aKlasse: 100 }},
-  { name: 'BMW', models: 700, details: { einser: 400, vierer: 200, siebener: 100 }},
-  { name: 'Volvo', models: 200, details: { xc60: 100, xc90: 50, xc40: 50 }},
-  { name: 'VW', models: 1000, details: { golf: 500, polo: 300, tiguan: 100, tuareq: 100 }},
-];
+} from 'recharts';
+import Papa from 'papaparse';
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#FF4567", "#32CD32", "#FFD700"];
 
 const CarCharts = () => {
+  const [data, setData] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+
+  useEffect(() => {
+    // CSV-Datei einlesen
+    fetch('path/to/your/file.csv')
+      .then(response => response.text())
+      .then(text => {
+        const results = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+        });
+
+        // Dynamische Umwandlung in das gewünschte Format
+        const formattedData = results.data.map(row => {
+          const item = {
+            name: row[Object.keys(row)[0]],  // Erster Header als 'name'
+            models: Number(row[Object.keys(row)[1]]), // Zweiter Header als 'models'
+            details: {},
+          };
+
+          // Alle weiteren Spalten als Details hinzufügen
+          Object.keys(row).slice(2).forEach(key => {
+            item.details[key] = Number(row[key]); // Tore in den Jahren
+          });
+
+          return item;
+        });
+
+        setData(formattedData);
+      });
+  }, []);
 
   // Event-Handler, wenn ein Pie-Segment geklickt wird
   const onPieClick = (brand) => {
@@ -24,7 +49,7 @@ const CarCharts = () => {
     );
   };
 
-  // Dynamisch alle Fahrzeugklassen (Details) aus den ausgewählten Marken extrahieren
+  // Dynamisch alle Jahre (Details) aus den ausgewählten Marken extrahieren
   const allKeys = [...new Set(selectedBrands.flatMap(brand => Object.keys(brand.details)))];
 
   // Formatierung der Daten für den Stacked Bar Chart
@@ -66,7 +91,7 @@ const CarCharts = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            {/* Dynamisch die Bars für alle gefundenen Fahrzeugklassen (Details) erstellen */}
+            {/* Dynamisch die Bars für alle gefundenen Jahre (Details) erstellen */}
             {allKeys.map((key, index) => (
               <Bar key={key} dataKey={key} stackId="a" fill={COLORS[index % COLORS.length]} />
             ))}
@@ -78,4 +103,3 @@ const CarCharts = () => {
 };
 
 export default CarCharts;
-
