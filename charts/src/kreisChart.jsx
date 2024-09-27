@@ -4,52 +4,44 @@ import axios from 'axios';
 import seedrandom from 'seedrandom';
 import 'chart.js/auto';
 
-
+// Funktion zum Generieren von Farben
 function generateColors(seed, numColors) {
   const rng = seedrandom(seed);
   const colors = [];
-
   for (let i = 0; i < numColors; i++) {
     const r = Math.floor(rng() * 255);
     const g = Math.floor(rng() * 255);
     const b = Math.floor(rng() * 255);
     colors.push(`rgba(${r}, ${g}, ${b}, 0.6)`);
   }
-
   return colors;
 }
 
 const PieChartWithStackedBar = () => {
   const [chartData, setChartData] = useState(null);
-  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [selectedPostalCodes, setSelectedPostalCodes] = useState([]);
 
   useEffect(() => {
     axios.get('http://localhost:5000/data')
       .then(response => {
         const data = response.data;
-
-        const spieler = data.Spieler;
-        const insgesamt = data.Insgesamt;
-        const year22 = data.Year22;
-        const year23 = data.Year23;
-        const year24 = data.Year24;
-
-        const colors = generateColors(42, spieler.length);
+        console.log('daten empfangen', data)
+        const postalCodes = data.postalCodes;
+        const total = data.total;
+        const colors = generateColors(42, postalCodes.length);
 
         setChartData({
-          labels: spieler,
+          labels: postalCodes,
           datasets: [
             {
-              label: 'Insgesamt Tore',
-              data: insgesamt,
+              label: 'Gesamt',
+              data: total,
               backgroundColor: colors,
               borderColor: colors.map(color => color.replace('0.6', '1')),
               borderWidth: 1,
-            },
+            }
           ],
-          year22,
-          year23,
-          year24
+          categories: data.categories
         });
       })
       .catch(error => console.error('Fehler beim Abrufen der Daten:', error));
@@ -58,55 +50,35 @@ const PieChartWithStackedBar = () => {
   const handlePieClick = (event, elements) => {
     if (elements.length > 0) {
       const clickedIndex = elements[0].index;
-      const clickedPlayer = chartData.labels[clickedIndex];
+      const clickedPostalCode = chartData.labels[clickedIndex];
 
-      setSelectedPlayers(prevSelected => {
-        if (prevSelected.includes(clickedPlayer)) {
-          return prevSelected.filter(player => player !== clickedPlayer);
+      setSelectedPostalCodes(prevSelected => {
+        if (prevSelected.includes(clickedPostalCode)) {
+          return prevSelected.filter(code => code !== clickedPostalCode);
         } else {
-          return [...prevSelected, clickedPlayer];
+          return [...prevSelected, clickedPostalCode];
         }
       });
     }
   };
 
   const generateBarChartData = () => {
-    if (!chartData || selectedPlayers.length === 0) return null;
+    if (!chartData || selectedPostalCodes.length === 0) return null;
+    console.log(chartData.categories)
+    const labels = selectedPostalCodes;
+    console.log(labels)
+    const categories = Object.keys(chartData.categories);
 
-    const labels = selectedPlayers;
-
-    const datasets = [
-      {
-        label: 'Year 2022',
-        data: selectedPlayers.map(player => {
-          const playerIndex = chartData.labels.indexOf(player);
-          return chartData.year22[playerIndex];
-        }),
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Year 2023',
-        data: selectedPlayers.map(player => {
-          const playerIndex = chartData.labels.indexOf(player);
-          return chartData.year23[playerIndex];
-        }),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Year 2024',
-        data: selectedPlayers.map(player => {
-          const playerIndex = chartData.labels.indexOf(player);
-          return chartData.year24[playerIndex];
-        }),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ];
+    const datasets = categories.map(category => ({
+      label: category,
+      data: selectedPostalCodes.map(postalCode => {
+        const postalCodeIndex = chartData.labels.indexOf(postalCode);
+        return chartData.categories[category][postalCodeIndex];
+      }),
+      backgroundColor: generateColors(category, 1)[0],
+      borderColor: generateColors(category, 1)[0].replace('0.6', '1'),
+      borderWidth: 1,
+    }));
 
     return {
       labels,
@@ -120,7 +92,7 @@ const PieChartWithStackedBar = () => {
 
   return (
     <div>
-      <h2>Gesamte Tore der Spieler</h2>
+      <h2>Gesamtdaten der Postleitzahlen</h2>
       <Pie 
         data={chartData} 
         options={{
@@ -130,9 +102,9 @@ const PieChartWithStackedBar = () => {
         }}
       />
 
-      {selectedPlayers.length > 0 && (
+      {selectedPostalCodes.length > 0 && (
         <div>
-          <h2>Jahresdaten der ausgewählten Spieler</h2>
+          <h2>Kategoriedaten der ausgewählten Postleitzahlen</h2>
           <Bar
             data={generateBarChartData()}
             options={{
@@ -159,4 +131,3 @@ const PieChartWithStackedBar = () => {
 };
 
 export default PieChartWithStackedBar;
-
