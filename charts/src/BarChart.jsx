@@ -58,33 +58,35 @@ const BarChartWithScroll = () => {
   }
 
   return (
-    <div>
+    <div style={{ width: '100%', height: '500px' }}>
       <h2>Kategoriedaten der Postleitzahlen</h2>
-      <div style={{ overflowX: 'scroll' }}>
-        <div style={{ width: `${chartData.labels.length * 100}px` }}>
-          <Bar
-            data={chartData}
-            options={{
-              plugins: {
-                legend: {
-                  display: true,
-                },
+      <div style={{ 
+          width: '800px', // Feste Breite des Chart-Containers
+          height: '400px', // Feste Höhe des Chart-Containers
+          overflow: 'auto'  // Scrollen innerhalb des Containers ermöglichen
+        }}>
+        <Bar
+          data={chartData}
+          options={{
+            plugins: {
+              legend: {
+                display: true,
               },
-              scales: {
-                x: {
-                  stacked: true,
-                  beginAtZero: true,
-                },
-                y: {
-                  stacked: true,
-                  beginAtZero: true,
-                },
+            },
+            scales: {
+              x: {
+                stacked: true,
+                beginAtZero: true,
               },
-              responsive: true,
-              maintainAspectRatio: false,
-            }}
-          />
-        </div>
+              y: {
+                stacked: true,
+                beginAtZero: true,
+              },
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+          }}
+        />
       </div>
     </div>
   );
